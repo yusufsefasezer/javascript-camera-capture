@@ -1,22 +1,19 @@
-var messageArea = null,
-  wrapperArea = null,
-  btnNewPhoto = null,
-  btnDownload = null,
-  videoCamera = null,
-  canvasPhoto = null;
+'use strict';
 
-function init() {
-  messageArea = document.querySelector("#msg");
-  wrapperArea = document.querySelector("#wrapper");
-  btnNewPhoto = document.querySelector("#newphoto");
-  btnDownload = document.querySelector("#download");
-  videoCamera = document.querySelector("video");
-  canvasPhoto = document.querySelector("canvas");
+var message = {},
+  wrapper = {},
+  buttonNewPhoto = {},
+  buttonDownload = {},
+  video = {},
+  canvas = {};
 
-  if (window.location.protocol != 'https:' && window.location.protocol != "file:") {
-    window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-    return;
-  }
+function initElement() {
+  message = document.getElementById('msg');
+  wrapper = document.getElementById('wrapper');
+  buttonNewPhoto = document.getElementById('newphoto');
+  buttonDownload = document.getElementById('download');
+  video = document.querySelector('video');
+  canvas = document.querySelector('canvas');
 
   if (navigator.mediaDevices === undefined) {
     navigator.mediaDevices = {};
@@ -33,51 +30,67 @@ function init() {
 
       return new Promise(function (resolve, reject) {
         getUserMedia.call(navigator, constraints, resolve, reject);
-      });
-    };
+      })
+    }
+  }
+}
+
+function onTakeAPhoto() {
+  canvas.getContext('2d').drawImage(video, 0, 0, video.width, video.height);
+  buttonDownload.removeAttribute('disabled');
+}
+
+function onDownloadPhoto() {
+  canvas.toBlob(function (blob) {
+    var link = document.createElement('a');
+    link.download = 'photo.jpg';
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.dispatchEvent(new MouseEvent('click'));
+
+  }, 'image/jpeg', 1);
+}
+
+function onLoadVideo() {
+  video.setAttribute('width', this.videoWidth);
+  video.setAttribute('height', this.videoHeight);
+  canvas.setAttribute('width', this.videoWidth);
+  canvas.setAttribute('height', this.videoHeight);
+  video.play();
+}
+
+function onMediaStream(stream) {
+  if ('srcObject' in video) {
+    video.srcObject = stream;
+  } else {
+    video.src = window.URL.createObjectURL(stream);
   }
 
-  navigator.mediaDevices.getUserMedia({
-    video: true
-  })
-    .then(function (stream) {
-      if ("srcObject" in videoCamera) {
-        videoCamera.srcObject = stream;
-      } else {
-        videoCamera.src = window.URL.createObjectURL(stream);
-      }
+  message.style.display = 'none';
+  wrapper.style.display = 'block';
+  buttonNewPhoto.addEventListener('click', onTakeAPhoto);
+  buttonDownload.addEventListener('click', onDownloadPhoto);
+  video.addEventListener('loadedmetadata', onLoadVideo);
+}
 
-      messageArea.style.display = "none";
-      wrapperArea.style.display = "block";
-      btnNewPhoto.onclick = takeAPhoto;
-      btnDownload.onclick = downloadPhoto;
+function onMediaError(err) {
+  message.innerHTML = err.name + ': ' + err.message;
+}
 
-      videoCamera.onloadedmetadata = function () {
-        videoCamera.setAttribute("width", this.videoWidth);
-        videoCamera.setAttribute("height", this.videoHeight);
-        canvasPhoto.setAttribute("width", this.videoWidth);
-        canvasPhoto.setAttribute("height", this.videoHeight);
-        videoCamera.play();
-      };
-    })
-    .catch(function (err) {
-      messageArea.innerHTML = err.name + ": " + err.message;
-    });
-};
+function initEvent() {
+  navigator.mediaDevices
+    .getUserMedia({ video: true })
+    .then(onMediaStream)
+    .catch(onMediaError);
+}
 
-function takeAPhoto() {
-  canvasPhoto.getContext("2d").drawImage(videoCamera, 0, 0, videoCamera.width, videoCamera.height);
-  btnDownload.removeAttribute("disabled");
-};
+function init() {
+  initElement();
+  initEvent();
+}
 
-function downloadPhoto() {
-  canvasPhoto.toBlob(function (blob) {
-    var link = document.createElement("a");
-    link.download = "photo.jpg";
-    link.setAttribute("href", URL.createObjectURL(blob));
-    link.dispatchEvent(new MouseEvent("click"));
+if (window.location.protocol != 'https:' && window.location.protocol != 'file:') {
+  window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+  return;
+}
 
-  }, "image/jpeg", 1);
-};
-
-window.onload = init;
+window.addEventListener('DOMContentLoaded', init);

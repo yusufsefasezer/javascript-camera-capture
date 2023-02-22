@@ -4,13 +4,16 @@ body {
   font-size: 120%;
   text-align: center;
 }
+
 #msg {
   color: #808080;
   font-weight: lighter;
 }
+
 #wrapper {
   display: none;
 }
+
 button {
   border: none;
   padding: 10px;
@@ -18,12 +21,15 @@ button {
   background-color: #f44336;
   color: #ffffff;
 }
+
 button:nth-last-child(1) {
   background-color: #4CAF50;
 }
+
 button:disabled {
   background: inherit;
 }
+
 canvas,
 video {
   background-color: #eee;
