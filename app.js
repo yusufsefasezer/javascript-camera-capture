@@ -90,7 +90,6 @@ function init() {
 
 if (window.location.protocol != 'https:' && window.location.protocol != 'file:') {
   window.location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-  return;
 }
 
 window.addEventListener('DOMContentLoaded', init);
